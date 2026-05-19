@@ -1,11 +1,15 @@
-// ═══════════════════════════════════════════════════════
-// Synapse v2 — Frontend Application Logic
-// ═══════════════════════════════════════════════════════
+// ═══ Synapse v3 — Core Application Logic ═══
 
 // ── State ──
-let authMode = 'login'; // 'login' | 'register'
+let authMode = 'login';
 let authToken = localStorage.getItem('synapse_token');
 let currentUser = localStorage.getItem('synapse_user');
+let currentTheme = localStorage.getItem('synapse_theme') || 'dark';
+let timerInterval = null;
+let timerSeconds = 25 * 60;
+let timerRunning = false;
+let pomodoroCount = parseInt(localStorage.getItem('synapse_pomodoros') || '0');
+let searchTimeout = null;
 
 // ── DOM Elements ──
 const $ = id => document.getElementById(id);
@@ -22,6 +26,7 @@ const authOverlay = $('auth-overlay');
 const appContainer = $('app-container');
 const authForm = $('auth-form');
 const authError = $('auth-error');
+const searchInput = $('search-input');
 
 const contentIds = { todos:'todo-content', calendar_events:'calendar-content', drafts:'drafts-content', notes:'notes-content' };
 const countIds = { todos:'todo-count', calendar_events:'calendar-count', drafts:'drafts-count', notes:'notes-count' };
@@ -44,6 +49,19 @@ function showToast(message, type='success') {
     toast.textContent = message;
     toastContainer.appendChild(toast);
     setTimeout(() => { toast.classList.replace('toast-in','toast-out'); setTimeout(() => toast.remove(), 300); }, 2500);
+}
+
+// ── Theme ──
+function toggleTheme() {
+    currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    localStorage.setItem('synapse_theme', currentTheme);
+    applyTheme();
+}
+function applyTheme() {
+    document.documentElement.classList.toggle('light', currentTheme === 'light');
+    document.documentElement.classList.toggle('dark', currentTheme === 'dark');
+    $('theme-icon-dark').classList.toggle('hidden', currentTheme === 'light');
+    $('theme-icon-light').classList.toggle('hidden', currentTheme === 'dark');
 }
 
 // ── Auth ──
@@ -95,20 +113,29 @@ function logout() {
     resetCards();
 }
 
+// ── Tab Navigation ──
+function switchTab(tab) {
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
+    document.querySelectorAll('.nav-tab').forEach(b => b.classList.remove('active'));
+    $('tab-' + tab).classList.remove('hidden');
+    document.querySelector('[data-tab="'+tab+'"]').classList.add('active');
+    if (tab === 'dashboard') loadDashboard();
+    if (tab === 'history') loadHistory();
+    if (tab === 'focus') loadFocusTodos();
+}
+
 // ── Init ──
-if (authToken && currentUser) showApp(); 
+applyTheme();
+$('pomodoro-count').textContent = pomodoroCount;
+if (authToken && currentUser) showApp();
 
 // ── Textarea ──
 textarea.addEventListener('input', () => { const l = textarea.value.length; charCount.textContent = l; triageBtn.disabled = l === 0; });
 
-// ── Markdown renderer (minimal) ──
+// ── Markdown renderer ──
 function renderMd(text) {
     if (!text) return '';
-    return text
-        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-        .replace(/\*(.+?)\*/g, '<em>$1</em>')
-        .replace(/^- (.+)$/gm, '<span class="block ml-2">• $1</span>')
-        .replace(/\n/g, '<br>');
+    return text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/\*(.+?)\*/g, '<em>$1</em>').replace(/^- (.+)$/gm, '<span class="block ml-2">• $1</span>').replace(/\n/g, '<br>');
 }
 
 // ── Copy ──
@@ -129,7 +156,7 @@ function resetCards() {
     Object.entries(msgs).forEach(([id, msg]) => { $(id).innerHTML = '<p class="text-gray-600 text-sm text-center">' + msg + '</p>'; });
 }
 
-// ── Action Buttons HTML ──
+// ── Action Buttons ──
 function actionBtns(itemId, copyText, category) {
     const enc = copyText.replace(/'/g, "\\'").replace(/"/g, '&quot;');
     return '<div class="flex items-center gap-1 flex-shrink-0">' +
@@ -152,7 +179,6 @@ function startEdit(el, itemId, field) {
         try {
             const res = await api('GET', '/api/items');
             const allData = await res.json();
-            // Find the item to get its current content
             let currentContent = null;
             for (const items of Object.values(allData)) {
                 const found = items.find(i => i.id === itemId);
@@ -192,149 +218,7 @@ async function deleteItem(itemId, btn) {
     } catch { showToast('Delete failed','error'); }
 }
 
-// ── Render Functions ──
-function renderTodos(todos) {
-    const el = $(contentIds.todos);
-    if (!todos?.length) { el.innerHTML = '<p class="text-gray-600 text-sm text-center">No tasks detected.</p>'; $(countIds.todos).classList.add('hidden'); return; }
-    $(countIds.todos).textContent = todos.length; $(countIds.todos).classList.remove('hidden');
-    el.innerHTML = '<div class="w-full space-y-2"></div>';
-    const c = el.firstChild;
-    todos.forEach((t, i) => {
-        const content = t.content || t;
-        const id = t.id;
-        const pClass = content.priority === 'high' ? 'badge-high' : content.priority === 'medium' ? 'badge-medium' : 'badge-low';
-        const completed = t.status === 'completed';
-        const div = document.createElement('div');
-        div.className = 'animate-fade-in flex items-start gap-2 p-2.5 rounded-lg bg-white/[0.02] hover:bg-white/[0.05] transition-colors' + (completed ? ' item-completed' : '');
-        div.style.animationDelay = i * 60 + 'ms';
-        div.setAttribute('data-item-id', id);
-        div.innerHTML = '<span class="item-text text-sm flex-1 text-gray-300 cursor-pointer" ondblclick="startEdit(this,' + id + ',\'task\')">' + (content.task||'') + '</span>' +
-            '<span class="' + pClass + ' text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full">' + (content.priority||'') + '</span>' +
-            actionBtns(id, content.task||'', 'todo');
-        c.appendChild(div);
-    });
-}
-
-function renderCalendar(events) {
-    const el = $(contentIds.calendar_events);
-    if (!events?.length) { el.innerHTML = '<p class="text-gray-600 text-sm text-center">No events detected.</p>'; $(countIds.calendar_events).classList.add('hidden'); return; }
-    $(countIds.calendar_events).textContent = events.length; $(countIds.calendar_events).classList.remove('hidden');
-    el.innerHTML = '<div class="w-full space-y-2"></div>';
-    const c = el.firstChild;
-    events.forEach((e, i) => {
-        const content = e.content || e;
-        const id = e.id;
-        const div = document.createElement('div');
-        div.className = 'animate-fade-in flex items-start gap-3 p-2.5 rounded-lg bg-white/[0.02] hover:bg-white/[0.05] transition-colors';
-        div.style.animationDelay = i * 60 + 'ms';
-        div.setAttribute('data-item-id', id);
-        let dateStr = content.date || '';
-        if (dateStr.includes('T')) { try { const d = new Date(dateStr); dateStr = d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'}) + ' · ' + d.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}); } catch{} }
-        else { dateStr = dateStr + (content.time ? ' · ' + content.time : ''); }
-        div.innerHTML = '<div class="flex-1"><p class="text-sm text-gray-300 font-medium cursor-pointer" ondblclick="startEdit(this,' + id + ',\'title\')">' + (content.title||'') + '</p><p class="text-xs text-cyan-400/70 mt-0.5">' + dateStr + '</p></div>' +
-            actionBtns(id, (content.title||'') + ' — ' + (content.date||''), 'calendar');
-        c.appendChild(div);
-    });
-}
-
-function renderDrafts(drafts) {
-    const el = $(contentIds.drafts);
-    if (!drafts?.length) { el.innerHTML = '<p class="text-gray-600 text-sm text-center">No communications detected.</p>'; $(countIds.drafts).classList.add('hidden'); return; }
-    $(countIds.drafts).textContent = drafts.length; $(countIds.drafts).classList.remove('hidden');
-    el.innerHTML = '<div class="w-full space-y-2"></div>';
-    const c = el.firstChild;
-    drafts.forEach((d, i) => {
-        const content = d.content || d;
-        const id = d.id;
-        const div = document.createElement('div');
-        div.className = 'animate-fade-in p-3 rounded-lg bg-white/[0.02] hover:bg-white/[0.05] transition-colors';
-        div.style.animationDelay = i * 60 + 'ms';
-        div.setAttribute('data-item-id', id);
-        div.innerHTML = '<div class="flex items-start justify-between gap-2"><div class="flex-1"><p class="text-xs text-purple-400/70 mb-1">To: ' + (content.recipient||'') + ' &middot; ' + (content.subject||'') + '</p><p class="text-sm text-gray-300 line-clamp-3">' + (content.body||'') + '</p></div>' +
-            actionBtns(id, 'To: ' + (content.recipient||'') + '\nSubject: ' + (content.subject||'') + '\n\n' + (content.body||''), 'draft') + '</div>';
-        c.appendChild(div);
-    });
-}
-
-function renderNotes(notes) {
-    const el = $(contentIds.notes);
-    if (!notes?.length) { el.innerHTML = '<p class="text-gray-600 text-sm text-center">No notes detected.</p>'; $(countIds.notes).classList.add('hidden'); return; }
-    $(countIds.notes).textContent = notes.length; $(countIds.notes).classList.remove('hidden');
-    el.innerHTML = '<div class="w-full space-y-2"></div>';
-    const c = el.firstChild;
-    notes.forEach((n, i) => {
-        const content = n.content || n;
-        const id = n.id;
-        const text = typeof content === 'string' ? content : content.content || '';
-        const div = document.createElement('div');
-        div.className = 'animate-fade-in flex items-start gap-2 p-2.5 rounded-lg bg-white/[0.02] hover:bg-white/[0.05] transition-colors';
-        div.style.animationDelay = i * 60 + 'ms';
-        div.setAttribute('data-item-id', id);
-        div.innerHTML = '<span class="text-amber-400/80 mt-0.5">💡</span><span class="item-text text-sm flex-1 text-gray-300 cursor-pointer" ondblclick="startEdit(this,' + id + ',\'content\')">' + renderMd(text) + '</span>' +
-            actionBtns(id, text, 'note');
-        c.appendChild(div);
-    });
-}
-
-// ── Load persisted items ──
-async function loadItems() {
-    try {
-        const res = await api('GET', '/api/items');
-        if (!res.ok) return;
-        const data = await res.json();
-        renderTodos(data.todos);
-        renderCalendar(data.calendar_events);
-        renderDrafts(data.drafts);
-        renderNotes(data.notes);
-    } catch { /* silent fail on first load */ }
-}
-
-// ── Loading State ──
-function setLoading(on) {
-    if (on) { btnText.textContent='Triaging...'; btnIcon.classList.add('hidden'); btnSpinner.classList.remove('hidden'); triageBtn.disabled=true; textarea.disabled=true; showSkeletons(); }
-    else { btnText.textContent='Triage'; btnIcon.classList.remove('hidden'); btnSpinner.classList.add('hidden'); triageBtn.disabled=textarea.value.length===0; textarea.disabled=false; }
-}
-
-// ── Triage ──
-async function triage() {
-    const text = textarea.value.trim();
-    if (!text) return;
-    errorBanner.classList.add('hidden');
-    setLoading(true);
-    try {
-        const res = await api('POST', '/api/triage', { text });
-        if (!res.ok) { const err = await res.json().catch(()=>({detail:'Unknown error'})); throw new Error(err.detail || 'Server error (' + res.status + ')'); }
-        const data = await res.json();
-        renderTodos(data.todos);
-        renderCalendar(data.calendar_events);
-        renderDrafts(data.drafts);
-        renderNotes(data.notes);
-        showToast('Brain dump triaged successfully!');
-        textarea.value = ''; charCount.textContent = '0';
-    } catch (err) {
-        errorMessage.textContent = err.message; errorBanner.classList.remove('hidden');
-        showToast(err.message, 'error');
-        resetCards();
-    } finally { setLoading(false); }
-}
-
-triageBtn.addEventListener('click', triage);
-textarea.addEventListener('keydown', e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); triage(); } });
-
-// ── CSV Export ──
-async function exportCSV() {
-    try {
-        const res = await api('GET', '/api/items/export');
-        if (!res.ok) throw new Error('Export failed');
-        const blob = await res.blob();
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a'); a.href = url; a.download = 'synapse_export.csv'; a.click();
-        URL.revokeObjectURL(url);
-        showToast('CSV exported!');
-    } catch (err) { showToast(err.message, 'error'); }
-}
-
-// Make functions globally accessible
+// ── Globals ──
 window.toggleAuthMode = toggleAuthMode;
 window.copyToClipboard = copyToClipboard;
 window.startEdit = startEdit;
@@ -342,3 +226,10 @@ window.toggleComplete = toggleComplete;
 window.deleteItem = deleteItem;
 window.logout = logout;
 window.exportCSV = exportCSV;
+window.switchTab = switchTab;
+window.toggleTheme = toggleTheme;
+window.useTemplate = useTemplate;
+window.startTimer = startTimer;
+window.pauseTimer = pauseTimer;
+window.resetTimer = resetTimer;
+window.setTimer = setTimer;
