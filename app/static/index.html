@@ -15,42 +15,7 @@
             theme: { extend: { fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] } } },
         };
     </script>
-    <style>
-        *{scrollbar-width:thin;scrollbar-color:#4338ca #0f0d2e}
-        body{font-family:'Inter',system-ui,sans-serif}
-        .bg-mesh{background-color:#050318;background-image:radial-gradient(ellipse 80% 50% at 50% -20%,rgba(99,102,241,.15),transparent),radial-gradient(ellipse 60% 40% at 80% 50%,rgba(34,211,238,.08),transparent),radial-gradient(ellipse 60% 40% at 20% 80%,rgba(139,92,246,.08),transparent)}
-        .btn-glow{position:relative;background:linear-gradient(135deg,#6366f1,#8b5cf6,#06b6d4);transition:all .3s ease}
-        .btn-glow::before{content:'';position:absolute;inset:-3px;border-radius:inherit;background:linear-gradient(135deg,#6366f1,#8b5cf6,#06b6d4);filter:blur(18px);opacity:.5;z-index:-1;transition:opacity .3s ease}
-        .btn-glow:hover::before{opacity:.9}
-        .btn-glow:hover{transform:translateY(-1px);box-shadow:0 0 40px rgba(99,102,241,.3)}
-        .btn-glow:disabled{opacity:.5;cursor:not-allowed;transform:none}
-        .btn-glow:disabled::before{opacity:.2}
-        @keyframes pulseRing{0%{transform:scale(1);opacity:.5}100%{transform:scale(1.15);opacity:0}}
-        .btn-glow:not(:disabled):hover::after{content:'';position:absolute;inset:-6px;border-radius:inherit;border:2px solid rgba(99,102,241,.4);animation:pulseRing 1.5s ease-out infinite}
-        .glass-card{background:rgba(15,13,46,.6);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border:1px solid rgba(99,102,241,.12);transition:all .3s ease}
-        .glass-card:hover{border-color:rgba(99,102,241,.3);transform:translateY(-2px);box-shadow:0 8px 32px rgba(99,102,241,.08)}
-        .textarea-glow:focus{box-shadow:0 0 0 2px rgba(99,102,241,.3),0 0 40px rgba(99,102,241,.05)}
-        @keyframes shimmer{0%{background-position:-400px 0}100%{background-position:400px 0}}
-        .skeleton-line{background:linear-gradient(90deg,rgba(99,102,241,.06) 25%,rgba(99,102,241,.12) 50%,rgba(99,102,241,.06) 75%);background-size:800px 100%;animation:shimmer 1.8s ease-in-out infinite;border-radius:6px}
-        @keyframes fadeInUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
-        .animate-fade-in{animation:fadeInUp .5s ease forwards;opacity:0}
-        @keyframes slideIn{from{transform:translateX(120%)}to{transform:translateX(0)}}
-        @keyframes slideOut{from{transform:translateX(0)}to{transform:translateX(120%)}}
-        .toast-in{animation:slideIn .3s ease forwards}
-        .toast-out{animation:slideOut .3s ease forwards}
-        @keyframes spin{to{transform:rotate(360deg)}}
-        .spinner{animation:spin .8s linear infinite}
-        .copy-btn{transition:all .2s ease}
-        .copy-btn:hover{color:#818cf8;transform:scale(1.15)}
-        .badge-high{background:rgba(239,68,68,.15);color:#fca5a5;border:1px solid rgba(239,68,68,.2)}
-        .badge-medium{background:rgba(251,191,36,.15);color:#fde68a;border:1px solid rgba(251,191,36,.2)}
-        .badge-low{background:rgba(34,197,94,.15);color:#86efac;border:1px solid rgba(34,197,94,.2)}
-        .item-completed span.item-text{text-decoration:line-through;opacity:.5}
-        .auth-overlay{background:rgba(5,3,24,.92);backdrop-filter:blur(20px)}
-        @keyframes modalIn{from{opacity:0;transform:scale(.95) translateY(20px)}to{opacity:1;transform:scale(1) translateY(0)}}
-        .modal-animate{animation:modalIn .3s ease forwards}
-        .inline-edit{background:rgba(99,102,241,.08);border:1px solid rgba(99,102,241,.3);border-radius:6px;padding:2px 6px;outline:none;color:#e2e8f0;width:100%}
-    </style>
+    <link rel="stylesheet" href="/static/styles.css"/>
 </head>
 <body class="bg-mesh min-h-screen text-gray-100 antialiased">
     <!-- Toast Container -->
@@ -99,80 +64,220 @@
         </div>
     </div>
 
+    <!-- Keyboard Shortcuts Modal -->
+    <div id="shortcuts-modal" class="hidden fixed inset-0 z-[55] flex items-center justify-center bg-black/60 backdrop-blur-sm">
+        <div class="modal-animate glass-card rounded-2xl p-6 w-full max-w-sm mx-4">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-bold text-gray-200">⌨️ Keyboard Shortcuts</h3>
+                <button onclick="document.getElementById('shortcuts-modal').classList.add('hidden')" class="text-gray-500 hover:text-gray-300">&times;</button>
+            </div>
+            <div class="space-y-2 text-sm">
+                <div class="flex justify-between"><span class="text-gray-400">Submit triage</span><kbd class="kbd">Ctrl+Enter</kbd></div>
+                <div class="flex justify-between"><span class="text-gray-400">Search</span><kbd class="kbd">Ctrl+K</kbd></div>
+                <div class="flex justify-between"><span class="text-gray-400">Dashboard</span><kbd class="kbd">Ctrl+D</kbd></div>
+                <div class="flex justify-between"><span class="text-gray-400">History</span><kbd class="kbd">Ctrl+H</kbd></div>
+                <div class="flex justify-between"><span class="text-gray-400">Focus Mode</span><kbd class="kbd">Ctrl+F</kbd></div>
+                <div class="flex justify-between"><span class="text-gray-400">Close modal</span><kbd class="kbd">Esc</kbd></div>
+                <div class="flex justify-between"><span class="text-gray-400">Show shortcuts</span><kbd class="kbd">?</kbd></div>
+            </div>
+        </div>
+    </div>
+
     <!-- Main App (hidden until auth) -->
-    <div id="app-container" class="hidden max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+    <div id="app-container" class="hidden max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
         <!-- Header -->
-        <header class="flex items-center justify-between mb-10">
+        <header class="flex items-center justify-between mb-8">
             <div class="flex items-center gap-2">
                 <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-cyan-400 flex items-center justify-center">
                     <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
                 </div>
                 <h1 class="text-2xl sm:text-3xl font-extrabold bg-gradient-to-r from-indigo-400 via-purple-400 to-cyan-400 bg-clip-text text-transparent">Synapse</h1>
             </div>
-            <div class="flex items-center gap-3">
+            <div class="flex items-center gap-2">
                 <span id="user-greeting" class="text-sm text-gray-400 hidden sm:inline"></span>
-                <button id="export-btn" onclick="exportCSV()" class="text-xs px-3 py-1.5 rounded-lg border border-indigo-500/20 text-indigo-300 hover:bg-indigo-500/10 transition" title="Export CSV">
-                    <svg class="w-4 h-4 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>CSV
+                <!-- Theme Toggle -->
+                <button id="theme-toggle" onclick="toggleTheme()" class="nav-icon-btn" title="Toggle Theme">
+                    <svg id="theme-icon-dark" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+                    <svg id="theme-icon-light" class="w-4 h-4 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                </button>
+                <button onclick="exportCSV()" class="nav-icon-btn" title="Export CSV">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                 </button>
                 <button onclick="logout()" class="text-xs px-3 py-1.5 rounded-lg border border-red-500/20 text-red-400 hover:bg-red-500/10 transition">Logout</button>
             </div>
         </header>
 
-        <!-- Input Section -->
-        <section class="mb-10">
-            <div class="relative">
-                <textarea id="brain-dump-input" class="textarea-glow w-full h-48 sm:h-56 bg-[#0f0d2e]/60 backdrop-blur border border-indigo-500/15 rounded-2xl p-5 sm:p-6 text-gray-200 text-base placeholder-gray-500 resize-none focus:outline-none focus:border-indigo-500/40 transition-all duration-300" placeholder="Dump your thoughts here... meetings, tasks, ideas, emails to write — anything goes." maxlength="5000"></textarea>
-                <div class="absolute bottom-3 right-4 text-xs text-gray-600"><span id="char-count">0</span>/5000</div>
-            </div>
-            <div class="flex items-center justify-between mt-4">
-                <p class="text-xs text-gray-600 hidden sm:block">Powered by Gemini AI · Ctrl+Enter to submit</p>
-                <button id="triage-btn" disabled class="btn-glow px-8 py-3 rounded-xl text-white font-semibold text-base tracking-wide flex items-center gap-2 ml-auto">
-                    <span id="btn-text">Triage</span>
-                    <svg id="btn-icon" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
-                    <svg id="btn-spinner" class="w-5 h-5 spinner hidden" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
-                </button>
-            </div>
-        </section>
+        <!-- Navigation Tabs -->
+        <nav class="flex gap-1 mb-6 p-1 rounded-xl bg-white/[0.03] border border-white/[0.06] overflow-x-auto" id="main-nav">
+            <button onclick="switchTab('triage')" class="nav-tab active" data-tab="triage">⚡ Triage</button>
+            <button onclick="switchTab('dashboard')" class="nav-tab" data-tab="dashboard">📊 Dashboard</button>
+            <button onclick="switchTab('history')" class="nav-tab" data-tab="history">📜 History</button>
+            <button onclick="switchTab('focus')" class="nav-tab" data-tab="focus">🎯 Focus</button>
+        </nav>
 
-        <!-- Results Grid -->
-        <section id="results-grid" class="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <!-- To-Do List Card -->
-            <div class="glass-card rounded-2xl p-5 sm:p-6 min-h-[220px] flex flex-col">
-                <div class="flex items-center gap-3 mb-4">
-                    <div class="w-9 h-9 rounded-lg bg-indigo-500/10 flex items-center justify-center"><svg class="w-5 h-5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg></div>
-                    <h2 class="text-lg font-semibold text-gray-200">To-Do List</h2>
-                    <span id="todo-count" class="ml-auto text-xs font-medium px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-300 hidden">0</span>
-                </div>
-                <div id="todo-content" class="flex-1 flex items-center justify-center"><p class="text-gray-600 text-sm text-center">Your tasks will appear here after triaging.</p></div>
+        <!-- Search Bar -->
+        <div id="search-bar" class="mb-6 relative">
+            <div class="relative">
+                <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                <input id="search-input" type="text" class="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white/[0.04] border border-indigo-500/15 text-gray-200 placeholder-gray-500 focus:outline-none focus:border-indigo-500/40 transition text-sm" placeholder="Search items... (Ctrl+K)"/>
             </div>
-            <!-- Calendar Events Card -->
-            <div class="glass-card rounded-2xl p-5 sm:p-6 min-h-[220px] flex flex-col">
-                <div class="flex items-center gap-3 mb-4">
-                    <div class="w-9 h-9 rounded-lg bg-cyan-500/10 flex items-center justify-center"><svg class="w-5 h-5 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg></div>
-                    <h2 class="text-lg font-semibold text-gray-200">Calendar Events</h2>
-                    <span id="calendar-count" class="ml-auto text-xs font-medium px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-300 hidden">0</span>
-                </div>
-                <div id="calendar-content" class="flex-1 flex items-center justify-center"><p class="text-gray-600 text-sm text-center">Detected events and dates will show here.</p></div>
+            <div id="search-results" class="hidden absolute top-full left-0 right-0 mt-2 glass-card rounded-xl p-4 max-h-80 overflow-y-auto z-30"></div>
+        </div>
+
+        <!-- TAB: Triage -->
+        <div id="tab-triage" class="tab-panel">
+            <!-- Templates -->
+            <div class="mb-4 flex gap-2 flex-wrap">
+                <span class="text-xs text-gray-500 self-center">Templates:</span>
+                <button onclick="useTemplate('morning')" class="template-btn">☀️ Morning Dump</button>
+                <button onclick="useTemplate('meeting')" class="template-btn">📋 Meeting Notes</button>
+                <button onclick="useTemplate('weekly')" class="template-btn">📅 Weekly Review</button>
+                <button onclick="useTemplate('project')" class="template-btn">🚀 Project Plan</button>
             </div>
-            <!-- Drafted Comms Card -->
-            <div class="glass-card rounded-2xl p-5 sm:p-6 min-h-[220px] flex flex-col">
-                <div class="flex items-center gap-3 mb-4">
-                    <div class="w-9 h-9 rounded-lg bg-purple-500/10 flex items-center justify-center"><svg class="w-5 h-5 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg></div>
-                    <h2 class="text-lg font-semibold text-gray-200">Drafted Comms</h2>
-                    <span id="drafts-count" class="ml-auto text-xs font-medium px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-300 hidden">0</span>
+            <!-- Input -->
+            <section class="mb-8">
+                <div class="relative">
+                    <textarea id="brain-dump-input" class="textarea-glow w-full h-44 sm:h-52 bg-[#0f0d2e]/60 backdrop-blur border border-indigo-500/15 rounded-2xl p-5 sm:p-6 text-gray-200 text-base placeholder-gray-500 resize-none focus:outline-none focus:border-indigo-500/40 transition-all duration-300" placeholder="Dump your thoughts here... meetings, tasks, ideas, emails to write — anything goes." maxlength="5000"></textarea>
+                    <div class="absolute bottom-3 right-4 text-xs text-gray-600"><span id="char-count">0</span>/5000</div>
                 </div>
-                <div id="drafts-content" class="flex-1 flex items-center justify-center"><p class="text-gray-600 text-sm text-center">AI-drafted emails and messages appear here.</p></div>
-            </div>
-            <!-- Notes/Ideas Card -->
-            <div class="glass-card rounded-2xl p-5 sm:p-6 min-h-[220px] flex flex-col">
-                <div class="flex items-center gap-3 mb-4">
-                    <div class="w-9 h-9 rounded-lg bg-amber-500/10 flex items-center justify-center"><svg class="w-5 h-5 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg></div>
-                    <h2 class="text-lg font-semibold text-gray-200">Notes & Ideas</h2>
-                    <span id="notes-count" class="ml-auto text-xs font-medium px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-300 hidden">0</span>
+                <div class="flex items-center justify-between mt-4">
+                    <p class="text-xs text-gray-600 hidden sm:block">Powered by Gemini AI · Ctrl+Enter to submit</p>
+                    <button id="triage-btn" disabled class="btn-glow px-8 py-3 rounded-xl text-white font-semibold text-base tracking-wide flex items-center gap-2 ml-auto">
+                        <span id="btn-text">Triage</span>
+                        <svg id="btn-icon" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+                        <svg id="btn-spinner" class="w-5 h-5 spinner hidden" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                    </button>
                 </div>
-                <div id="notes-content" class="flex-1 flex items-center justify-center"><p class="text-gray-600 text-sm text-center">Random thoughts and ideas will be captured here.</p></div>
+            </section>
+            <!-- Results Grid -->
+            <section id="results-grid" class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div class="glass-card rounded-2xl p-5 sm:p-6 min-h-[200px] flex flex-col">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-9 h-9 rounded-lg bg-indigo-500/10 flex items-center justify-center"><svg class="w-5 h-5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg></div>
+                        <h2 class="text-lg font-semibold text-gray-200">To-Do List</h2>
+                        <span id="todo-count" class="ml-auto text-xs font-medium px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-300 hidden">0</span>
+                    </div>
+                    <div id="todo-content" class="flex-1 flex items-center justify-center"><p class="text-gray-600 text-sm text-center">Your tasks will appear here after triaging.</p></div>
+                </div>
+                <div class="glass-card rounded-2xl p-5 sm:p-6 min-h-[200px] flex flex-col">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-9 h-9 rounded-lg bg-cyan-500/10 flex items-center justify-center"><svg class="w-5 h-5 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg></div>
+                        <h2 class="text-lg font-semibold text-gray-200">Calendar Events</h2>
+                        <span id="calendar-count" class="ml-auto text-xs font-medium px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-300 hidden">0</span>
+                    </div>
+                    <div id="calendar-content" class="flex-1 flex items-center justify-center"><p class="text-gray-600 text-sm text-center">Detected events and dates will show here.</p></div>
+                </div>
+                <div class="glass-card rounded-2xl p-5 sm:p-6 min-h-[200px] flex flex-col">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-9 h-9 rounded-lg bg-purple-500/10 flex items-center justify-center"><svg class="w-5 h-5 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg></div>
+                        <h2 class="text-lg font-semibold text-gray-200">Drafted Comms</h2>
+                        <span id="drafts-count" class="ml-auto text-xs font-medium px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-300 hidden">0</span>
+                    </div>
+                    <div id="drafts-content" class="flex-1 flex items-center justify-center"><p class="text-gray-600 text-sm text-center">AI-drafted emails and messages appear here.</p></div>
+                </div>
+                <div class="glass-card rounded-2xl p-5 sm:p-6 min-h-[200px] flex flex-col">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-9 h-9 rounded-lg bg-amber-500/10 flex items-center justify-center"><svg class="w-5 h-5 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg></div>
+                        <h2 class="text-lg font-semibold text-gray-200">Notes & Ideas</h2>
+                        <span id="notes-count" class="ml-auto text-xs font-medium px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-300 hidden">0</span>
+                    </div>
+                    <div id="notes-content" class="flex-1 flex items-center justify-center"><p class="text-gray-600 text-sm text-center">Random thoughts and ideas will be captured here.</p></div>
+                </div>
+            </section>
+        </div>
+
+        <!-- TAB: Dashboard -->
+        <div id="tab-dashboard" class="tab-panel hidden">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                <div class="glass-card rounded-xl p-4 text-center">
+                    <p class="text-2xl font-bold text-indigo-400" id="stat-total">0</p>
+                    <p class="text-xs text-gray-500 mt-1">Total Items</p>
+                </div>
+                <div class="glass-card rounded-xl p-4 text-center">
+                    <p class="text-2xl font-bold text-cyan-400" id="stat-sessions">0</p>
+                    <p class="text-xs text-gray-500 mt-1">Triage Sessions</p>
+                </div>
+                <div class="glass-card rounded-xl p-4 text-center">
+                    <p class="text-2xl font-bold text-green-400" id="stat-completion">0%</p>
+                    <p class="text-xs text-gray-500 mt-1">Completion Rate</p>
+                </div>
+                <div class="glass-card rounded-xl p-4 text-center">
+                    <p class="text-2xl font-bold text-purple-400" id="stat-score">0</p>
+                    <p class="text-xs text-gray-500 mt-1">Productivity Score</p>
+                </div>
             </div>
-        </section>
+            <!-- Charts Row -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div class="glass-card rounded-2xl p-5">
+                    <h3 class="text-sm font-semibold text-gray-300 mb-4">Category Breakdown</h3>
+                    <canvas id="category-chart" width="300" height="200"></canvas>
+                </div>
+                <div class="glass-card rounded-2xl p-5">
+                    <h3 class="text-sm font-semibold text-gray-300 mb-4">7-Day Activity</h3>
+                    <canvas id="activity-chart" width="300" height="200"></canvas>
+                </div>
+            </div>
+            <!-- Priority Matrix -->
+            <div class="glass-card rounded-2xl p-5 mt-5">
+                <h3 class="text-sm font-semibold text-gray-300 mb-4">📌 Priority Matrix (Eisenhower)</h3>
+                <div class="grid grid-cols-2 gap-3" id="priority-matrix">
+                    <div class="rounded-xl bg-red-500/5 border border-red-500/15 p-3 min-h-[120px]">
+                        <p class="text-xs font-bold text-red-400 mb-2">🔥 Urgent & Important</p>
+                        <div id="matrix-urgent-important" class="space-y-1 text-sm text-gray-300"></div>
+                    </div>
+                    <div class="rounded-xl bg-amber-500/5 border border-amber-500/15 p-3 min-h-[120px]">
+                        <p class="text-xs font-bold text-amber-400 mb-2">📋 Important, Not Urgent</p>
+                        <div id="matrix-important" class="space-y-1 text-sm text-gray-300"></div>
+                    </div>
+                    <div class="rounded-xl bg-blue-500/5 border border-blue-500/15 p-3 min-h-[120px]">
+                        <p class="text-xs font-bold text-blue-400 mb-2">⚡ Urgent, Not Important</p>
+                        <div id="matrix-urgent" class="space-y-1 text-sm text-gray-300"></div>
+                    </div>
+                    <div class="rounded-xl bg-gray-500/5 border border-gray-500/15 p-3 min-h-[120px]">
+                        <p class="text-xs font-bold text-gray-400 mb-2">📦 Neither</p>
+                        <div id="matrix-neither" class="space-y-1 text-sm text-gray-300"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB: History -->
+        <div id="tab-history" class="tab-panel hidden">
+            <div id="history-list" class="space-y-3">
+                <p class="text-gray-600 text-sm text-center py-8">No triage history yet. Start by triaging some text!</p>
+            </div>
+            <div id="history-pagination" class="flex justify-center gap-2 mt-4"></div>
+        </div>
+
+        <!-- TAB: Focus Mode -->
+        <div id="tab-focus" class="tab-panel hidden">
+            <div class="max-w-lg mx-auto">
+                <!-- Pomodoro Timer -->
+                <div class="glass-card rounded-2xl p-6 text-center mb-6">
+                    <h3 class="text-sm font-semibold text-gray-400 mb-2">🍅 Pomodoro Timer</h3>
+                    <p class="text-5xl font-bold text-white font-mono mb-4" id="timer-display">25:00</p>
+                    <div class="flex justify-center gap-3">
+                        <button onclick="startTimer()" id="timer-start-btn" class="px-5 py-2 rounded-lg bg-green-500/20 text-green-400 border border-green-500/30 hover:bg-green-500/30 transition text-sm font-medium">Start</button>
+                        <button onclick="pauseTimer()" id="timer-pause-btn" class="hidden px-5 py-2 rounded-lg bg-amber-500/20 text-amber-400 border border-amber-500/30 hover:bg-amber-500/30 transition text-sm font-medium">Pause</button>
+                        <button onclick="resetTimer()" class="px-5 py-2 rounded-lg bg-gray-500/20 text-gray-400 border border-gray-500/30 hover:bg-gray-500/30 transition text-sm font-medium">Reset</button>
+                    </div>
+                    <div class="flex justify-center gap-2 mt-3">
+                        <button onclick="setTimer(25)" class="timer-preset active">25m</button>
+                        <button onclick="setTimer(15)" class="timer-preset">15m</button>
+                        <button onclick="setTimer(5)" class="timer-preset">5m</button>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-3">Sessions completed: <span id="pomodoro-count">0</span></p>
+                </div>
+                <!-- Active Todos Only -->
+                <div class="glass-card rounded-2xl p-5">
+                    <h3 class="text-sm font-semibold text-gray-300 mb-3">Active Tasks</h3>
+                    <div id="focus-todos" class="space-y-2">
+                        <p class="text-gray-600 text-sm text-center">No active tasks.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <footer class="text-center mt-12 text-gray-600 text-xs">Built with &hearts; using FastAPI &middot; Gemini AI &middot; Tailwind CSS</footer>
     </div>
     <script src="/static/app.js"></script>
