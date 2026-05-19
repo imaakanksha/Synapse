@@ -1,4 +1,4 @@
-# 🧠 Synapse — AI-Powered Text Triage
+# 🧠 Synapse — AI-Powered Text Triage SaaS
 
 **Synapse** transforms unstructured brain dumps into actionable, categorized items using Google's Gemini AI. Paste in your raw thoughts, and Synapse triages them into:
 
@@ -7,13 +7,32 @@
 - ✉️ **Drafted Comms** — Ready-to-send email/message drafts
 - 💡 **Notes & Ideas** — Everything else worth remembering
 
+## ✨ Features
+
+| Feature | Description |
+|---------|-------------|
+| 🤖 AI Triage | Gemini 2.0 Flash-powered categorization of raw text |
+| 📊 Analytics Dashboard | Real-time stats, category breakdown charts, productivity score |
+| 📌 Priority Matrix | Eisenhower matrix auto-populated from your todos |
+| 📜 Triage History | Full session replay with re-triage capability |
+| 🎯 Focus Mode | Minimal view with active tasks only |
+| 🍅 Pomodoro Timer | Built-in 25/15/5 min timer with session tracking |
+| 🔍 Live Search | Instant search across all items |
+| 📝 Smart Templates | Pre-built prompts for common scenarios |
+| ⌨️ Keyboard Shortcuts | Full shortcut system (press `?` to view) |
+| 🎨 Theme Toggle | Dark/Light mode with smooth transitions |
+| 📤 CSV Export | Export todos and notes to CSV |
+| ✏️ Inline Editing | Double-click any item to edit in place |
+| 🔐 JWT Authentication | Secure multi-user auth with bcrypt |
+
 ## Tech Stack
 
 | Layer | Technology |
 |-------|------------|
-| Backend | Python · FastAPI · Uvicorn |
+| Backend | Python · FastAPI · Uvicorn · SQLAlchemy |
 | Frontend | HTML · Vanilla JS · Tailwind CSS (CDN) |
 | AI | Google Gemini 2.0 Flash |
+| Auth | JWT · bcrypt · HTTPBearer |
 | Deploy | Docker · Google Cloud Run |
 
 ## Quick Start (Local)
@@ -52,23 +71,14 @@ Open [http://localhost:8080](http://localhost:8080) in your browser.
 
 ## Docker Deployment
 
-### Build the Image
-
 ```bash
 docker build -t synapse .
-```
-
-### Run Locally with Docker
-
-```bash
 docker run -p 8080:8080 -e GEMINI_API_KEY=your_key_here synapse
 ```
 
 ---
 
 ## Deploy to Google Cloud Run
-
-### One-Command Deploy
 
 ```bash
 gcloud run deploy synapse \
@@ -78,41 +88,69 @@ gcloud run deploy synapse \
   --set-env-vars GEMINI_API_KEY=your_key_here
 ```
 
-### Or Build & Push Manually
-
-```bash
-# Set your project
-export PROJECT_ID=your-gcp-project-id
-
-# Build and push to Artifact Registry
-gcloud builds submit --tag gcr.io/$PROJECT_ID/synapse
-
-# Deploy
-gcloud run deploy synapse \
-  --image gcr.io/$PROJECT_ID/synapse \
-  --platform managed \
-  --region us-central1 \
-  --allow-unauthenticated \
-  --set-env-vars GEMINI_API_KEY=your_key_here
-```
-
 ---
+
+## API Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/register` | Create new account |
+| POST | `/api/login` | Authenticate & get JWT |
+| GET | `/api/me` | Get current user profile |
+| POST | `/api/triage` | AI-triage raw text |
+| GET | `/api/items` | Get all items (grouped) |
+| PUT | `/api/items/{id}` | Update item content/status |
+| DELETE | `/api/items/{id}` | Delete an item |
+| GET | `/api/items/export` | Export active items as CSV |
+| GET | `/api/analytics/dashboard` | Dashboard statistics |
+| GET | `/api/history` | Triage session history |
+| DELETE | `/api/history/{id}` | Delete a history session |
+| GET | `/api/search?q=` | Search across all items |
+| GET | `/health` | Health check |
 
 ## Project Structure
 
 ```
 synapse/
 ├── app/
-│   ├── main.py              # FastAPI backend + Gemini integration
+│   ├── main.py                 # FastAPI entry point
+│   ├── core/
+│   │   ├── config.py           # Environment settings
+│   │   ├── database.py         # SQLAlchemy engine & session
+│   │   ├── dependencies.py     # Auth dependency
+│   │   └── security.py         # JWT & bcrypt utilities
+│   ├── models/
+│   │   ├── user.py             # User ORM model
+│   │   ├── item.py             # TriagedItem ORM model
+│   │   └── triage_session.py   # TriageSession ORM model
+│   ├── routers/
+│   │   ├── auth.py             # Register/Login/Profile
+│   │   ├── triage.py           # AI triage endpoint
+│   │   ├── items.py            # CRUD + CSV export
+│   │   └── analytics.py        # Dashboard, History, Search
 │   └── static/
-│       └── index.html        # Full frontend (HTML + Tailwind + JS)
-├── .env                      # Local secrets (gitignored)
-├── .env.example              # Template for API key
-├── .dockerignore
+│       ├── index.html           # Main frontend
+│       ├── styles.css           # Design system
+│       ├── app.js               # Core application logic
+│       └── features.js          # Feature modules
+├── .env.example
 ├── Dockerfile
+├── gunicorn_conf.py
 ├── requirements.txt
 └── README.md
 ```
+
+## Keyboard Shortcuts
+
+| Key | Action |
+|-----|--------|
+| `Ctrl+Enter` | Submit triage |
+| `Ctrl+K` | Focus search |
+| `Ctrl+D` | Dashboard tab |
+| `Ctrl+H` | History tab |
+| `Ctrl+F` | Focus mode tab |
+| `?` | Show shortcuts |
+| `Esc` | Close modals |
 
 ## License
 
