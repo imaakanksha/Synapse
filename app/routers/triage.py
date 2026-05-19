@@ -19,6 +19,7 @@ from app.core.database import get_db
 from app.core.dependencies import get_current_user
 from app.models.user import User
 from app.models.item import TriagedItem
+from app.models.triage_session import TriageSession
 
 router = APIRouter(prefix="/api", tags=["triage"])
 
@@ -157,6 +158,7 @@ async def triage_text(
 
         # Persist each item to the database
         saved_items = {"todos": [], "calendar_events": [], "drafts": [], "notes": []}
+        total_item_count = 0
 
         for category_key, items in result.items():
             db_category = CATEGORY_MAP.get(category_key, category_key)
@@ -169,9 +171,18 @@ async def triage_text(
                 )
                 db.add(db_item)
                 db.flush()  # Get the ID without committing
+                total_item_count += 1
 
                 saved_item = db_item.to_dict()
                 saved_items[category_key].append(saved_item)
+
+        # Save triage session for history
+        session_record = TriageSession(
+            user_id=current_user.id,
+            raw_text=request.text,
+            item_count=total_item_count,
+        )
+        db.add(session_record)
 
         db.commit()
 

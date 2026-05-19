@@ -13,7 +13,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
 from app.core.database import init_db
-from app.routers import auth, triage, items
+from app.routers import auth, triage, items, analytics
 
 
 # ── Lifespan ──
@@ -52,6 +52,7 @@ STATIC_DIR = BASE_DIR / "static"
 app.include_router(auth.router)
 app.include_router(triage.router)
 app.include_router(items.router)
+app.include_router(analytics.router)
 
 
 # ── Root Route ──
