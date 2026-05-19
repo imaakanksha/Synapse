@@ -25,5 +25,8 @@ class User(Base):
     # Relationship to triaged items
     items = relationship("TriagedItem", back_populates="owner", cascade="all, delete-orphan")
 
+    # Relationship to triage sessions (history)
+    sessions = relationship("TriageSession", back_populates="owner", cascade="all, delete-orphan")
+
     def __repr__(self):
         return f"<User(id={self.id}, username='{self.username}')>"
