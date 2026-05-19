@@ -173,8 +173,9 @@ async def search_items(
         query = query.filter(TriagedItem.status == status)
 
     # For SQLite, cast JSON content to text for searching
+    from sqlalchemy import cast, String as SAString
     query = query.filter(
-        func.cast(TriagedItem.content, db.bind.dialect.name == 'sqlite' and str or str).like(f"%{q}%")
+        cast(TriagedItem.content, SAString).ilike(f"%{q}%")
     )
 
     items = query.order_by(TriagedItem.created_at.desc()).limit(50).all()
